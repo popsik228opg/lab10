@@ -1,0 +1,122 @@
+import java.lang.annotation.*;
+import java.lang.reflect.*;
+import java.util.Arrays;
+import java.util.Comparator;
+
+public class Main {
+
+    // 1. Создание собственной аннотации MyAnnotation
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.METHOD)
+    @interface MyAnnotation {
+        String value();
+    }
+
+    // 2. Создание аннотации Version
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.METHOD)
+    @interface Version {
+        String number();
+        String author();
+    }
+
+    // 3. Метод с собственной аннотацией
+    @MyAnnotation("Моя первая аннотация")
+    public void myMethod() {
+        System.out.println("Выполняется myMethod");
+    }
+
+    // 4. Метод с аннотацией Deprecated
+    @Deprecated
+    public void oldMethod() {
+        System.out.println("Вызван устаревший метод");
+    }
+
+    // 5. Методы с аннотацией Version
+    @Version(number = "1.0", author = "Alice")
+    public void featureOne() {
+        System.out.println("Feature One");
+    }
+
+    @Version(number = "1.1", author = "Bob")
+    public void featureTwo() {
+        System.out.println("Feature Two");
+    }
+
+    // 6. Метод без аннотации для самостоятельной работы
+    public void featureThree() {
+        System.out.println("Feature Three");
+    }
+
+    // 7. Проверка версий методов через рефлексию
+    public static void checkVersions(Class<?> clazz) {
+
+        Method[] methods = clazz.getDeclaredMethods();
+
+        Arrays.sort(methods, Comparator.comparing(Method::getName));
+
+        int annotated = 0;
+        int notAnnotated = 0;
+
+        for (Method method : methods) {
+
+            Version version = method.getAnnotation(Version.class);
+
+            if (version != null) {
+
+                annotated++;
+
+                System.out.println(
+                    "Method: " + method.getName()
+                    + ", Version: " + version.number()
+                    + ", Author: " + version.author()
+                );
+
+            } else {
+                notAnnotated++;
+            }
+        }
+
+        System.out.println("Методов с @Version: " + annotated);
+        System.out.println("Методов без @Version: " + notAnnotated);
+
+        if (annotated == 0) {
+            System.out.println("Аннотации @Version отсутствуют");
+        }
+    }
+
+    // 8. Главный метод программы
+    public static void main(String[] args) throws Exception {
+
+        Main obj = new Main();
+
+        System.out.println("=== MY ANNOTATION ===");
+
+        Method method = Main.class.getDeclaredMethod("myMethod");
+
+        MyAnnotation annotation =
+            method.getAnnotation(MyAnnotation.class);
+
+        if (annotation != null) {
+            System.out.println("Значение: " + annotation.value());
+        }
+
+        // Проверка метода без аннотации
+        Method method2 = Main.class.getDeclaredMethod("featureThree");
+
+        MyAnnotation absent =
+            method2.getAnnotation(MyAnnotation.class);
+
+        if (absent == null) {
+            System.out.println("Аннотация отсутствует (null)");
+        }
+
+        System.out.println("\n=== DEPRECATED ===");
+
+        obj.oldMethod();
+
+        System.out.println("\n=== VERSION ===");
+
+        checkVersions(Main.class);
+    }
+}
